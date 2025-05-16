@@ -37,6 +37,7 @@ This project scrapes articles from [Youm7.com](https://www.youm7.com), extracts 
 
 Tested with a sample of 100 articles. Validated structure, ensured titles and texts are properly parsed.
 
-## Run Method
+## Deployment
 
-Run the Streamlit dashboard using `python -m streamlit run dashboard.py`
+
+(https://web-scraping-crawling-youm7-5p6thdxnenju5jinepzj2e.streamlit.app/)
