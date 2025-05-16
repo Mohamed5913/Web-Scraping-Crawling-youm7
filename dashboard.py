@@ -1,23 +1,28 @@
 import streamlit as st
 import json
+import requests
 import pandas as pd
 import networkx as nx
 import matplotlib.pyplot as plt
 
-# Load scraped data
-def load_data(file_path):
+# Cache data loading for performance
+@st.cache_data
+def load_data_from_gdrive(url):
     try:
-        with open(file_path, "r", encoding="utf-8") as f:
-            return json.load(f)  # JSON array, not JSONL
-    except json.JSONDecodeError:
-        st.error("❌ Failed to parse JSON. Please check the file format.")
-        return []
-    except FileNotFoundError:
-        st.error("❌ File not found. Make sure the file path is correct.")
+        response = requests.get(url)
+        response.raise_for_status()
+        return response.json()
+    except Exception as e:
+        st.error(f"Failed to load data from Google Drive: {e}")
         return []
 
+DATA_URL = "https://drive.google.com/file/d/1MqnDpn3EN8MTKrmXB3aLezXsdeZ-koyl/view?usp=sharing"
 
+data = load_data_from_gdrive(DATA_URL)
 
+if not data:
+    st.error("❌ No data loaded. Please check your data URL or file sharing settings.")
+    st.stop()
 
 def calculate_crawlability_score(data):
     valid_articles = [item for item in data if item.get("text") and len(item["text"]) > 500]
