@@ -53,7 +53,7 @@ def generate_sitemap(data):
 st.title("🕷️ Web Crawl Dashboard")
 st.markdown("Visual insights from scraping [youm7.com](https://www.youm7.com/)")
 
-data = load_data("clean_articles2.json")
+data = load_data_from_gdrive("clean_articles2.json")
 
 if not data:
     st.error("❌ No data loaded. Please make sure 'clean_articles2.json' is not empty and properly formatted.")
