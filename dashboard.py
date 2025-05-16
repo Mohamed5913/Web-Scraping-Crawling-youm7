@@ -16,7 +16,7 @@ def load_data_from_gdrive(url):
         st.error(f"Failed to load data from Google Drive: {e}")
         return []
 
-DATA_URL = "https://drive.google.com/file/d/1MqnDpn3EN8MTKrmXB3aLezXsdeZ-koyl/view?usp=sharing"
+DATA_URL = "https://drive.google.com/uc?export=download&id=1MqnDpn3EN8MTKrmXB3aLezXsdeZ-koyl"
 
 data = load_data_from_gdrive(DATA_URL)
 
