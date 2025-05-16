@@ -25,15 +25,18 @@ if not data:
     st.stop()
 
 def calculate_crawlability_score(data):
-    valid_articles = [item for item in data if item.get("text")]
-    total = len(valid_articles)
+    valid_articles = [item for item in data if item.get("text") and len(item["text"]) > 500]
+    structured_articles = [item for item in valid_articles if item.get("title") and " " in item["title"]]
 
-    if total == 0:
+    if not data:
         return 0
 
-    avg_text_length = sum(len(item["text"]) for item in valid_articles) / total
-    score = min(100, int(avg_text_length / 100))  # Simple heuristic
-    return score
+    structure_ratio = len(structured_articles) / len(data)
+    avg_length = sum(len(item["text"]) for item in valid_articles) / len(valid_articles)
+
+    score = (structure_ratio * 60) + min(40, avg_length / 100)
+    return int(score)
+
 
 def get_top_articles(data, n=5):
     return sorted(data, key=lambda x: len(x.get("text", "")), reverse=True)[:n]
@@ -61,7 +64,14 @@ for article in top_articles:
     st.text_area("Preview", article.get("text", "")[:300] + "...", height=100)
     st.markdown(f"[Read more]({article.get('url', '#')})\n")
 
+    
+
 # Recommendations
+
+st.subheader("📏 Article Length Distribution")
+lengths = [len(item["text"]) for item in data if item.get("text")]
+st.bar_chart(lengths)
+
 st.subheader("🧠 Recommendations for Crawling")
 st.markdown("""
 - Use `aiohttp` + `BeautifulSoup` for scalable async scraping.
