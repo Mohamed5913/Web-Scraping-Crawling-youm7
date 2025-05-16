@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 # Cache data loading for performance
 @st.cache_data
-def load_data_from_gdrive(url):
+def load_data_from_url(url):
     try:
         response = requests.get(url)
         response.raise_for_status()
@@ -16,9 +16,9 @@ def load_data_from_gdrive(url):
         st.error(f"Failed to load data from Google Drive: {e}")
         return []
 
-DATA_URL = "https://drive.google.com/file/d/1MqnDpn3EN8MTKrmXB3aLezXsdeZ-koyl/view?usp=sharing"
+DATA_URL = "https://www.dropbox.com/scl/fi/7n1df8q48qsuawwmc348m/clean_articles2.json?rlkey=3pq6hvlt6ijeom17jrccpzez0&st=757y8eul&dl=1"
 
-data = load_data_from_gdrive(DATA_URL)
+data = load_data_from_url(DATA_URL)
 
 if not data:
     st.error("❌ No data loaded. Please check your data URL or file sharing settings.")
