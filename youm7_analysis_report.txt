@@ -1,0 +1,38 @@
+
+YOUm7 NEWS ANALYSIS REPORT
+=========================
+
+Generated on: 2025-05-22 00:51:43
+Total Articles Scraped: 5639
+
+Section Breakdown:
+-----------------
+section
+عاجل            500
+فن              500
+كرة عالمية      500
+رياضة           500
+اقتصاد          500
+أخبار عالمية    500
+حوادث           500
+سياسة           500
+تقارير مصرية    500
+صحة             500
+تكنولوجيا       500
+مرأة ومنوعات    139
+
+Key Statistics:
+--------------
+- Average word count per article: 256.0
+- Article with most words: "حظك اليوم وتوقعات الأبراج الإثنين 19 مايو على الصعيد المهنى والعاطفى والصحى" (3197 words)
+- Total images scraped: 8662
+- Most active writer:  (191 articles)
+
+Top Sections by Word Count:
+--------------------------
+section
+صحة             371.524000
+مرأة ومنوعات    336.676259
+تقارير مصرية    299.832000
+تكنولوجيا       297.244000
+سياسة           274.622000
