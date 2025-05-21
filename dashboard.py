@@ -1,88 +1,85 @@
+# run it with streamlit run dashboard2.py
 import streamlit as st
-import json
-import requests
 import pandas as pd
-import networkx as nx
+import json
+import seaborn as sns
 import matplotlib.pyplot as plt
+import networkx as nx
+import requests
+from io import StringIO
 
-# Cache data loading for performance
-@st.cache_data
-def load_data_from_url(url):
-    try:
-        response = requests.get(url)
-        response.raise_for_status()
-        return response.json()
-    except Exception as e:
-        st.error(f"Failed to load data from Google Drive: {e}")
-        return []
+# Set page config
+st.set_page_config(page_title="Youm7 Scraper Dashboard", layout="wide")
 
-DATA_URL = "https://www.dropbox.com/scl/fi/7n1df8q48qsuawwmc348m/clean_articles2.json?rlkey=3pq6hvlt6ijeom17jrccpzez0&st=757y8eul&dl=1"
+st.title("📰 Youm7 Scraper Dashboard")
 
-data = load_data_from_url(DATA_URL)
+# ✅ Correct Dropbox direct download link
+dropbox_url = "https://www.dropbox.com/scl/fi/uulrjbxjpbastuh92f9zu/youm7_articles.json?rlkey=eltkmj7ry9nr4j0rz5oa7kafp&st=liq8ocfj&dl=1"
 
-if not data:
-    st.error("❌ No data loaded. Please check your data URL or file sharing settings.")
+# Download and load JSON
+try:
+    response = requests.get(dropbox_url)
+    response.raise_for_status()
+    data = json.load(StringIO(response.text))
+    df = pd.DataFrame(data)
+except Exception as e:
+    st.error(f"❌ Failed to download or load JSON file.\n\n{e}")
     st.stop()
 
-def calculate_crawlability_score(data):
-    valid_articles = [item for item in data if item.get("text") and len(item["text"]) > 500]
-    structured_articles = [item for item in valid_articles if item.get("title") and " " in item["title"]]
+# Convert scrape_time to datetime
+if "scrape_time" in df.columns:
+    df['scrape_time'] = pd.to_datetime(df['scrape_time'], errors='coerce')
 
-    if not data:
-        return 0
+# Sidebar filters
+st.sidebar.header("🔎 Filters")
+section_filter = st.sidebar.multiselect("Select Sections", df["section"].unique(), default=df["section"].unique())
+writer_filter = st.sidebar.multiselect("Select Writers", df["writer"].dropna().unique())
 
-    structure_ratio = len(structured_articles) / len(data)
-    avg_length = sum(len(item["text"]) for item in valid_articles) / len(valid_articles)
+# Apply filters
+filtered_df = df[df["section"].isin(section_filter)]
+if writer_filter:
+    filtered_df = filtered_df[filtered_df["writer"].isin(writer_filter)]
 
-    score = (structure_ratio * 60) + min(40, avg_length / 100)
-    return int(score)
+# SECTION-WISE ARTICLE COUNT
+st.subheader("📌 Articles per Section")
+section_counts = filtered_df["section"].value_counts()
+st.bar_chart(section_counts)
 
+# TOP WRITERS
+st.subheader("✍️ Top Writers")
+top_writers = filtered_df["writer"].value_counts().head(10)
+st.bar_chart(top_writers)
 
-def get_top_articles(data, n=5):
-    return sorted(data, key=lambda x: len(x.get("text", "")), reverse=True)[:n]
+# WORD COUNT DISTRIBUTION BY SECTION
+st.subheader("📝 Word Count Distribution by Section")
+fig_wc, ax_wc = plt.subplots(figsize=(12, 6))
+sns.boxplot(data=filtered_df, x="word_count", y="section", ax=ax_wc)
+ax_wc.set_title("Word Count Distribution")
+st.pyplot(fig_wc)
 
-def generate_sitemap(data):
-    G = nx.DiGraph()
-    base = "https://www.youm7.com/"
-    for item in data[:50]:  # limit for clarity
-        G.add_edge(base, item.get("url", ""))
-    return G
+# IMAGE COUNT PER SECTION
+st.subheader("🖼️ Average Image Count per Section")
+image_counts = filtered_df.groupby("section")["image_count"].mean().sort_values(ascending=False)
+st.bar_chart(image_counts)
 
-st.title("🕷️ Web Crawl Dashboard")
-st.markdown("Visual insights from scraping [youm7.com](https://www.youm7.com/)")
+# RECENT ARTICLES
+st.subheader("🆕 Recent Articles")
+recent_articles = filtered_df.sort_values(by="scrape_time", ascending=False).head(5)
+for _, row in recent_articles.iterrows():
+    st.markdown(f"**{row['title']}**")
+    st.write(f"🗂️ Section: {row['section']} | ✍️ Writer: {row['writer'] or 'Unknown'} | 📅 Date: {row['date']}")
+    st.write(f"📝 Word Count: {row['word_count']} | 🖼️ Image Count: {row['image_count']}")
+    st.write(row["text"][:300] + "...")
+    st.markdown(f"[🔗 Read more]({row['url']})")
+    st.write("---")
 
-# Crawlability Score
-st.subheader("📊 Crawlability Score")
-score = calculate_crawlability_score(data)
-st.metric("Score (out of 100)", score)
-
-# Top Extracted Data
-st.subheader("📰 Top Extracted Articles")
-top_articles = get_top_articles(data)
-for article in top_articles:
-    st.markdown(f"**{article.get('title', 'No Title')}**")
-    st.text_area("Preview", article.get("text", "")[:300] + "...", height=100)
-    st.markdown(f"[Read more]({article.get('url', '#')})\n")
-
-    
-
-# Recommendations
-
-st.subheader("📏 Article Length Distribution")
-lengths = [len(item["text"]) for item in data if item.get("text")]
-st.bar_chart(lengths)
-
-st.subheader("🧠 Recommendations for Crawling")
-st.markdown("""
-- Use `aiohttp` + `BeautifulSoup` for scalable async scraping.
-- Add delay or random User-Agents to avoid blocking.
-- Consider Scrapy or Selenium for dynamic pages.
-- Use `robots.txt` parsing for responsible crawling.
-""")
-
-# Sitemap Visualization
+# VISUAL SITEMAP (First 50 URLs)
 st.subheader("🗺️ Visual Sitemap")
-G = generate_sitemap(data)
-plt.figure(figsize=(10, 6))
-nx.draw(G, with_labels=False, node_size=20, arrows=True)
-st.pyplot(plt)
+G = nx.DiGraph()
+base_url = "https://www.youm7.com/"
+for url in filtered_df["url"].head(50):
+    G.add_edge(base_url, url)
+
+fig_map, ax_map = plt.subplots(figsize=(10, 6))
+nx.draw(G, ax=ax_map, with_labels=False, node_size=20, arrows=True)
+st.pyplot(fig_map)
