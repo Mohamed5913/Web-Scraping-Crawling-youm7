@@ -5,3 +5,4 @@ streamlit
 matplotlib
 networkx
 pandas
+seaborn
